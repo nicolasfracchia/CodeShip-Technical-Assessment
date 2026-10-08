@@ -1,0 +1,233 @@
+{
+  "$comment": "Single source of truth for models. Prices are USD per 1M tokens at each provider's paid list price (sources: provider pricing pages / OpenRouter catalogue, checked 2026-10-07). Free-tier usage is billed $0; the app shows the list-price estimate. Disabled models show in the dropdown but are never called.",
+  "defaultModel": "gemini-flash",
+  "fallbackOrder": [
+    "gemini-flash",
+    "groq-gpt-oss",
+    "gemini-flash-lite",
+    "cloudflare-llama",
+    "openrouter-nemotron",
+    "cohere-command-a",
+    "zai-glm-flash",
+    "claude-sonnet",
+    "openai-gpt",
+    "sambanova-llama"
+  ],
+  "providers": {
+    "google": {
+      "label": "Google Gemini",
+      "type": "google",
+      "apiKeyEnv": "GEMINI_API_KEY"
+    },
+    "groq": {
+      "label": "Groq",
+      "type": "openai-compatible",
+      "baseURL": "https://api.groq.com/openai/v1",
+      "apiKeyEnv": "GROQ_API_KEY"
+    },
+    "cloudflare": {
+      "label": "Cloudflare Workers AI",
+      "type": "openai-compatible",
+      "baseURL": "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/ai/v1",
+      "apiKeyEnv": "CLOUDFLARE_API_TOKEN"
+    },
+    "zai": {
+      "label": "Z.ai",
+      "type": "openai-compatible",
+      "baseURL": "https://api.z.ai/api/paas/v4",
+      "apiKeyEnv": "ZAI_API_KEY"
+    },
+    "openrouter": {
+      "label": "OpenRouter",
+      "type": "openai-compatible",
+      "baseURL": "https://openrouter.ai/api/v1",
+      "apiKeyEnv": "OPENROUTER_API_KEY"
+    },
+    "cohere": {
+      "label": "Cohere",
+      "type": "openai-compatible",
+      "baseURL": "https://api.cohere.ai/compatibility/v1",
+      "apiKeyEnv": "COHERE_API_KEY"
+    },
+    "sambanova": {
+      "label": "SambaNova",
+      "type": "openai-compatible",
+      "baseURL": "https://api.sambanova.ai/v1",
+      "apiKeyEnv": "SAMBANOVA_API_KEY"
+    },
+    "anthropic": {
+      "label": "Anthropic Claude",
+      "type": "openai-compatible",
+      "baseURL": "https://api.anthropic.com/v1",
+      "apiKeyEnv": "ANTHROPIC_API_KEY"
+    },
+    "openai": {
+      "label": "OpenAI",
+      "type": "openai-compatible",
+      "baseURL": "https://api.openai.com/v1",
+      "apiKeyEnv": "OPENAI_API_KEY"
+    }
+  },
+  "models": [
+    {
+      "id": "gemini-flash",
+      "provider": "google",
+      "model": "gemini-3.5-flash",
+      "name": "Gemini 3.5 Flash",
+      "description": "Google's fast general model. Default; free tier.",
+      "contextWindow": 1048576,
+      "maxOutputTokens": 2048,
+      "pricing": {
+        "inputPerMTok": 1.5,
+        "outputPerMTok": 9.0
+      },
+      "enabled": true,
+      "providerOptions": {
+        "google": {
+          "thinkingConfig": {
+            "thinkingLevel": "low"
+          }
+        }
+      }
+    },
+    {
+      "id": "gemini-flash-lite",
+      "provider": "google",
+      "model": "gemini-3.1-flash-lite",
+      "name": "Gemini 3.1 Flash-Lite",
+      "description": "Google's cheapest, lightest model. Free tier.",
+      "contextWindow": 1048576,
+      "maxOutputTokens": 2048,
+      "pricing": {
+        "inputPerMTok": 0.25,
+        "outputPerMTok": 1.5
+      },
+      "providerOptions": {
+        "google": {
+          "thinkingConfig": {
+            "thinkingLevel": "low"
+          }
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "groq-gpt-oss",
+      "provider": "groq",
+      "model": "openai/gpt-oss-120b",
+      "name": "GPT-OSS 120B (Groq)",
+      "description": "OpenAI's open-weight model on Groq hardware. Very fast.",
+      "contextWindow": 131072,
+      "maxOutputTokens": 2048,
+      "pricing": {
+        "inputPerMTok": 0.15,
+        "outputPerMTok": 0.6
+      },
+      "enabled": true,
+      "providerOptions": {
+        "groq": {
+          "reasoningEffort": "low"
+        }
+      }
+    },
+    {
+      "id": "cloudflare-llama",
+      "provider": "cloudflare",
+      "model": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+      "name": "Llama 3.3 70B (Cloudflare)",
+      "description": "Meta Llama on Cloudflare's edge. Small 24K context window.",
+      "contextWindow": 24000,
+      "maxOutputTokens": 1536,
+      "pricing": {
+        "inputPerMTok": 0.293,
+        "outputPerMTok": 2.253
+      },
+      "enabled": true
+    },
+    {
+      "id": "zai-glm-flash",
+      "provider": "zai",
+      "model": "glm-4.5-flash",
+      "name": "GLM-4.5 Flash (Z.ai)",
+      "description": "Zhipu's free reasoning model. Slower, thinks before answering.",
+      "contextWindow": 131072,
+      "maxOutputTokens": 4096,
+      "pricing": {
+        "inputPerMTok": 0,
+        "outputPerMTok": 0
+      },
+      "enabled": true
+    },
+    {
+      "id": "openrouter-nemotron",
+      "provider": "openrouter",
+      "model": "nvidia/nemotron-3-super-120b-a12b:free",
+      "name": "Nemotron 3 Super (OpenRouter)",
+      "description": "NVIDIA's open model via OpenRouter's free pool. Shared rate limits.",
+      "contextWindow": 262144,
+      "maxOutputTokens": 2048,
+      "pricing": {
+        "inputPerMTok": 0,
+        "outputPerMTok": 0
+      },
+      "enabled": true
+    },
+    {
+      "id": "cohere-command-a",
+      "provider": "cohere",
+      "model": "command-a-03-2025",
+      "name": "Command A (Cohere)",
+      "description": "Cohere's enterprise RAG model. Trial key: 20 requests/min.",
+      "contextWindow": 256000,
+      "maxOutputTokens": 2048,
+      "pricing": {
+        "inputPerMTok": 2.5,
+        "outputPerMTok": 10
+      },
+      "enabled": true
+    },
+    {
+      "id": "claude-sonnet",
+      "provider": "anthropic",
+      "model": "claude-sonnet-5-5",
+      "name": "Claude Sonnet 5.5",
+      "description": "Anthropic's balanced model: careful, well-cited answers.",
+      "contextWindow": 1000000,
+      "maxOutputTokens": 2048,
+      "pricing": {
+        "inputPerMTok": 2,
+        "outputPerMTok": 10
+      },
+      "enabled": true
+    },
+    {
+      "id": "openai-gpt",
+      "provider": "openai",
+      "model": "gpt-5.4-mini",
+      "name": "GPT-5.4 mini",
+      "description": "OpenAI's small flagship: fast and capable.",
+      "contextWindow": 400000,
+      "maxOutputTokens": 2048,
+      "pricing": {
+        "inputPerMTok": 0.75,
+        "outputPerMTok": 4.5
+      },
+      "enabled": true
+    },
+    {
+      "id": "sambanova-llama",
+      "provider": "sambanova",
+      "model": "Meta-Llama-3.3-70B-Instruct",
+      "name": "Llama 3.3 70B (SambaNova)",
+      "description": "Meta Llama on SambaNova's dataflow chips.",
+      "contextWindow": 131072,
+      "maxOutputTokens": 2048,
+      "pricing": {
+        "inputPerMTok": 0.6,
+        "outputPerMTok": 1.2
+      },
+      "enabled": false,
+      "disabledReason": "Account requires a payment method"
+    }
+  ]
+}

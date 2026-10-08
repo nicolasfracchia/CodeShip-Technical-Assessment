@@ -15,6 +15,8 @@ export interface SourcePassage {
   file: string;
   docTitle: string;
   section: string;
+  /** "product documentation" | "release notes" | "company-wide" */
+  kind: string;
   date: string | null;
   text: string;
   score: number;
@@ -34,6 +36,7 @@ export function retrieveForConversation(messages: ChatMessage[]): {
       file: r.chunk.file,
       docTitle: r.chunk.docTitle,
       section: r.chunk.section,
+      kind: r.chunk.docType === "company" ? "company-wide" : r.chunk.docType === "release-notes" ? "release notes" : "product documentation",
       date: r.chunk.date,
       text: r.chunk.text,
       score: Math.round(r.score * 100) / 100,

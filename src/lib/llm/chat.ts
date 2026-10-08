@@ -29,7 +29,7 @@ export type StreamFn = (args: {
   | { type: "text"; text: string }
   /** Reasoning/thinking activity: not shown, but proves the provider is alive (resets the idle timer). */
   | { type: "activity" }
-  | { type: "usage"; inputTokens: number; outputTokens: number }
+  | { type: "usage"; inputTokens: number; outputTokens: number; truncated?: boolean }
 >;
 
 export const realStream: StreamFn = async function* ({ model, messages, signal }) {
@@ -45,6 +45,7 @@ export const realStream: StreamFn = async function* ({ model, messages, signal }
   });
   let inputTokens = 0;
   let outputTokens = 0;
+  let truncated = false;
   for await (const part of result.stream) {
     switch (part.type) {
       case "text-delta":
@@ -55,6 +56,7 @@ export const realStream: StreamFn = async function* ({ model, messages, signal }
         break;
       case "finish-step":
       case "finish": {
+        if (part.finishReason === "length") truncated = true;
         const u = "totalUsage" in part ? part.totalUsage : part.usage;
         if (u) {
           inputTokens = u.inputTokens ?? inputTokens;
@@ -71,7 +73,7 @@ export const realStream: StreamFn = async function* ({ model, messages, signal }
         throw Object.assign(new Error("aborted"), { name: "AbortError" });
     }
   }
-  yield { type: "usage", inputTokens, outputTokens };
+  yield { type: "usage", inputTokens, outputTokens, truncated };
 };
 
 /**
@@ -104,6 +106,7 @@ export async function* runChat(req: ChatRequest, streamFn: StreamFn = realStream
       const messages = buildModelMessages(history, req.sources);
 
       let usage = { inputTokens: 0, outputTokens: 0 };
+      let truncated = false;
       const iterator = streamFn({ model, messages, signal: controller.signal })[Symbol.asyncIterator]();
       let waitMs = FIRST_TOKEN_TIMEOUT_MS;
       for (;;) {
@@ -131,6 +134,7 @@ export async function* runChat(req: ChatRequest, streamFn: StreamFn = realStream
           waitMs = IDLE_TIMEOUT_MS;
         } else {
           usage = { inputTokens: ev.inputTokens, outputTokens: ev.outputTokens };
+          truncated = !!ev.truncated;
         }
       }
       if (!emitted.trim()) throw Object.assign(new Error("Empty response from provider"), { statusCode: 502 });
@@ -144,6 +148,7 @@ export async function* runChat(req: ChatRequest, streamFn: StreamFn = realStream
         usage,
         cost: estimateCost(model, usage.inputTokens, usage.outputTokens),
         contextWindow: model.contextWindow,
+        truncated,
         failures: failures.map(({ modelId, modelName, kind, message }) => ({ modelId, modelName, kind, message })),
       };
       return;

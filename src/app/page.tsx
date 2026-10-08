@@ -179,6 +179,9 @@ export default function ChatPage() {
           modelName: ev.modelName,
           requestedModelName: ev.requestedModelName,
           failures: ev.failures,
+          notices: ev.truncated
+            ? [...(m.notices ?? []), "This answer hit the model's length limit and may be incomplete. Ask a narrower question for the rest."]
+            : m.notices,
           usage: { inputTokens: ev.usage.inputTokens, outputTokens: ev.usage.outputTokens, cost: ev.cost.total },
         }));
         break;

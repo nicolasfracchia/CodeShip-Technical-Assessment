@@ -25,6 +25,8 @@ export type StreamEvent =
       usage: { inputTokens: number; outputTokens: number };
       cost: { input: number; output: number; total: number };
       contextWindow: number;
+      /** The model hit its output-token limit; the answer is incomplete. */
+      truncated: boolean;
       failures: Failure[];
     }
   | { type: "error"; code: string; message: string; failures?: Failure[] };

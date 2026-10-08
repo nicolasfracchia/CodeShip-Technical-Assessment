@@ -1,10 +1,10 @@
 {
   "$comment": "Single source of truth for models. Prices are USD per 1M tokens at each provider's paid list price (sources: provider pricing pages / OpenRouter catalogue, checked 2026-10-07). Free-tier usage is billed $0; the app shows the list-price estimate. Disabled models show in the dropdown but are never called.",
-  "defaultModel": "gemini-flash",
+  "defaultModel": "groq-gpt-oss",
   "fallbackOrder": [
-    "gemini-flash",
     "groq-gpt-oss",
     "gemini-flash-lite",
+    "gemini-flash",
     "cloudflare-llama",
     "openrouter-nemotron",
     "cohere-command-a",
@@ -70,13 +70,32 @@
   },
   "models": [
     {
+      "id": "groq-gpt-oss",
+      "provider": "groq",
+      "model": "openai/gpt-oss-120b",
+      "name": "GPT-OSS 120B (Groq)",
+      "description": "OpenAI's open-weight model on Groq. Default: fastest, 1,000 free requests/day.",
+      "contextWindow": 131072,
+      "maxOutputTokens": 4096,
+      "pricing": {
+        "inputPerMTok": 0.15,
+        "outputPerMTok": 0.6
+      },
+      "enabled": true,
+      "providerOptions": {
+        "groq": {
+          "reasoningEffort": "medium"
+        }
+      }
+    },
+    {
       "id": "gemini-flash",
       "provider": "google",
       "model": "gemini-3.5-flash",
       "name": "Gemini 3.5 Flash",
-      "description": "Google's fast general model. Default; free tier.",
+      "description": "Google's strongest free model. Free tier is only 20 requests/day.",
       "contextWindow": 1048576,
-      "maxOutputTokens": 2048,
+      "maxOutputTokens": 4096,
       "pricing": {
         "inputPerMTok": 1.5,
         "outputPerMTok": 9.0
@@ -97,7 +116,7 @@
       "name": "Gemini 3.1 Flash-Lite",
       "description": "Google's cheapest, lightest model. Free tier.",
       "contextWindow": 1048576,
-      "maxOutputTokens": 2048,
+      "maxOutputTokens": 4096,
       "pricing": {
         "inputPerMTok": 0.25,
         "outputPerMTok": 1.5
@@ -110,25 +129,6 @@
         }
       },
       "enabled": true
-    },
-    {
-      "id": "groq-gpt-oss",
-      "provider": "groq",
-      "model": "openai/gpt-oss-120b",
-      "name": "GPT-OSS 120B (Groq)",
-      "description": "OpenAI's open-weight model on Groq hardware. Very fast.",
-      "contextWindow": 131072,
-      "maxOutputTokens": 2048,
-      "pricing": {
-        "inputPerMTok": 0.15,
-        "outputPerMTok": 0.6
-      },
-      "enabled": true,
-      "providerOptions": {
-        "groq": {
-          "reasoningEffort": "low"
-        }
-      }
     },
     {
       "id": "cloudflare-llama",
@@ -165,7 +165,7 @@
       "name": "Nemotron 3 Super (OpenRouter)",
       "description": "NVIDIA's open model via OpenRouter's free pool. Shared rate limits.",
       "contextWindow": 262144,
-      "maxOutputTokens": 2048,
+      "maxOutputTokens": 4096,
       "pricing": {
         "inputPerMTok": 0,
         "outputPerMTok": 0

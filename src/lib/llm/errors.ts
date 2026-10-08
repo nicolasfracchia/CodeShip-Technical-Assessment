@@ -59,7 +59,7 @@ export function classifyError(err: unknown): ClassifiedError {
 /** Final message when every provider in the chain failed (E9: say what to do). */
 export function allFailedMessage(errors: ClassifiedError[]): string {
   if (errors.length === 0) {
-    return "No AI provider is configured on the server. Add at least one API key (see README) and restart.";
+    return "No AI provider is configured on the server. Add at least one API key (see README), then redeploy or restart the server.";
   }
   if (errors.every((e) => e.kind === "rate_limit")) {
     const wait = Math.max(...errors.map((e) => e.retryAfter ?? 0));

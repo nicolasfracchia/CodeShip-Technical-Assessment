@@ -34,7 +34,13 @@ One key is enough. Every provider without a key is shown as *unavailable* in the
 
 ### Deploy to Vercel
 
-Import the repo in the Vercel dashboard (framework: Next.js, no settings to change). Add the keys from `.env.example` as **Environment Variables**, then deploy. The KB index is generated at build time (`prebuild`), so the function never reads markdown at runtime.
+1. Import the repo in the Vercel dashboard. `vercel.json` pins the framework to Next.js, so there are no build settings to change.
+2. Add the keys from `.env.example` under **Settings → Environment Variables**. Paste only the value, with no spaces around it.
+3. Deploy. If you add or change keys later, **redeploy**: environment variables only reach new deployments.
+
+The KB index is generated at build time (`prebuild`), so the function never reads markdown at runtime. The build needs no keys. With no keys at all, the app still loads and explains that no provider is configured.
+
+**"No Output Directory named 'public' found"** means the Vercel project was created with the "Other" framework preset (for example, imported before `package.json` existed). `vercel.json` now forces Next.js. If the error persists, open **Settings → Build & Deployment**, set Framework Preset to **Next.js**, and turn off any Output Directory override.
 
 ---
 

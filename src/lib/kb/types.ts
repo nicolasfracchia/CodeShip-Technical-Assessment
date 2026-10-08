@@ -1,4 +1,7 @@
-export type Product = "relay" | "vault" | "pulse" | "ledger";
+/** The four NimbusStack products. Single source for chunking, retrieval and follow-up handling. */
+export const PRODUCTS = ["relay", "vault", "pulse", "ledger"] as const;
+
+export type Product = (typeof PRODUCTS)[number];
 
 export type DocType = "product" | "release-notes" | "company";
 

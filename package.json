@@ -17,6 +17,8 @@
     "pretest": "npm run build:kb",
     "test": "vitest run",
     "eval": "tsx scripts/eval.ts",
+    "ask": "tsx scripts/ask.ts",
+    "probe": "npm run build:kb && tsx scripts/probe-retrieval.ts",
     "check:bundle": "tsx scripts/check-bundle.ts"
   },
   "dependencies": {

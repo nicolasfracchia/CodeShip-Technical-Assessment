@@ -2,7 +2,7 @@
  * End-to-end eval against a running server (local or deployed).
  *   npm run eval                                  # default model, http://localhost:3000
  *   BASE_URL=https://your-app.vercel.app MODEL=groq-gpt-oss EVAL_DELAY_MS=8000 npm run eval
- * Each case checks the answer text with regexes; full answers go to eval-results.md.
+ * Each case checks the answer text with regexes; full answers go to docs/eval-results.md.
  */
 import { writeFileSync } from "node:fs";
 import { ask } from "./ask";
@@ -82,7 +82,7 @@ async function main() {
   const total = cases.length + 1;
   console.log(`\n${pass}/${total} passed`);
   report.push(`\n**${pass}/${total} passed**\n`);
-  writeFileSync("eval-results.md", report.join("\n"));
+  writeFileSync("docs/eval-results.md", report.join("\n"));
   process.exit(pass === total ? 0 : 1);
 }
 

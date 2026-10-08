@@ -1,37 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import type { StreamEvent, Failure } from "@/lib/events";
-import type { SourcePassage } from "@/lib/kb";
+import { AssistantBubble, UserBubble } from "@/components/chat/MessageBubbles";
+import { ContextMeter, contextUsage } from "@/components/chat/ContextMeter";
+import type { StreamEvent } from "@/lib/events";
 import type { PublicModel } from "@/lib/llm/config";
-import { prepareMarkdown } from "@/lib/ui/citations";
-
-interface Usage {
-  inputTokens: number;
-  outputTokens: number;
-  cost: number;
-}
-
-interface Msg {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  status?: "streaming" | "done" | "error" | "stopped";
-  sources?: SourcePassage[];
-  requestedModelName?: string;
-  modelId?: string;
-  modelName?: string;
-  usage?: Usage;
-  notices?: string[];
-  failures?: Failure[];
-}
-
-const uid = () => Math.random().toString(36).slice(2);
-const fmtCost = (n: number) => (n === 0 ? "$0" : n < 0.0001 ? "<$0.0001" : `$${n.toFixed(4)}`);
-const fmtInt = (n: number) => n.toLocaleString("en-US");
-
+import { fmtCost, fmtInt, uid } from "@/lib/ui/format";
+import type { Msg, SessionTotals } from "@/lib/ui/types";
+import { exportUsage } from "@/lib/ui/usage-export";
 
 const SUGGESTIONS = [
   "What are the key differences between the Pro and Enterprise pricing tiers?",
@@ -68,7 +44,7 @@ export default function ChatPage() {
 
   const selected = models.find((m) => m.id === modelId);
 
-  const totals = useMemo(() => {
+  const totals = useMemo<SessionTotals>(() => {
     const done = messages.filter((m) => m.usage);
     return {
       inputTokens: done.reduce((s, m) => s + (m.usage?.inputTokens ?? 0), 0),
@@ -78,15 +54,7 @@ export default function ChatPage() {
     };
   }, [messages]);
 
-  // Context-window estimate for the NEXT request on the currently selected model:
-  // the last request's input + its answer (both are re-sent next time). Recomputed on model switch (E7).
-  const context = useMemo(() => {
-    const last = [...messages].reverse().find((m) => m.usage);
-    const used = last?.usage ? last.usage.inputTokens + last.usage.outputTokens : 0;
-    const window = selected?.contextWindow ?? 0;
-    const pct = window ? (used / window) * 100 : 0;
-    return { used, window, pct, level: pct >= 90 ? "red" : pct >= 75 ? "amber" : "ok" };
-  }, [messages, selected]);
+  const context = useMemo(() => contextUsage(messages, selected), [messages, selected]);
 
   function patch(id: string, fn: (m: Msg) => Msg) {
     setMessages((prev) => prev.map((m) => (m.id === id ? fn(m) : m)));
@@ -195,36 +163,6 @@ export default function ChatPage() {
     setBanner(null);
   }
 
-  function exportUsage(format: "csv" | "json") {
-    const rows = messages
-      .map((m, i) => ({ m, q: messages[i - 1] }))
-      .filter(({ m }) => m.role === "assistant" && m.usage)
-      .map(({ m, q }, i) => ({
-        turn: i + 1,
-        question: q?.content ?? "",
-        requestedModel: m.requestedModelName ?? "",
-        answeredBy: m.modelName ?? "",
-        inputTokens: m.usage!.inputTokens,
-        outputTokens: m.usage!.outputTokens,
-        estimatedCostUSD: Number(m.usage!.cost.toFixed(8)),
-      }));
-    let blob: Blob;
-    if (format === "json") {
-      blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), totals, turns: rows }, null, 2)], {
-        type: "application/json",
-      });
-    } else {
-      const esc = (v: unknown) => `"${String(v).replace(/"/g, '""')}"`;
-      const header = Object.keys(rows[0] ?? { turn: 0 }).join(",");
-      blob = new Blob([[header, ...rows.map((r) => Object.values(r).map(esc).join(","))].join("\n")], { type: "text/csv" });
-    }
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `nimbus-usage-${Date.now()}.${format}`;
-    a.click();
-    URL.revokeObjectURL(a.href);
-  }
-
   return (
     <div className="flex h-dvh flex-col bg-slate-50 text-slate-900">
       {/* Header */}
@@ -264,14 +202,14 @@ export default function ChatPage() {
           <div className="flex gap-1">
             <button
               disabled={!totals.count}
-              onClick={() => exportUsage("csv")}
+              onClick={() => exportUsage(messages, totals, "csv")}
               className="rounded border border-slate-300 px-2 py-1 hover:bg-slate-100 disabled:opacity-40"
             >
               CSV
             </button>
             <button
               disabled={!totals.count}
-              onClick={() => exportUsage("json")}
+              onClick={() => exportUsage(messages, totals, "json")}
               className="rounded border border-slate-300 px-2 py-1 hover:bg-slate-100 disabled:opacity-40"
             >
               JSON
@@ -284,23 +222,7 @@ export default function ChatPage() {
             {selected.pricing.outputPerMTok} per 1M tokens (in/out, list price)
           </div>
         )}
-        {selected && (
-          <div className="mx-auto mt-2 max-w-4xl" aria-live="polite">
-            <div className="h-1.5 w-full overflow-hidden rounded bg-slate-200">
-              <div
-                className={`h-full ${context.level === "red" ? "bg-red-500" : context.level === "amber" ? "bg-amber-500" : "bg-emerald-500"}`}
-                style={{ width: `${Math.min(100, Math.max(context.pct, context.used ? 0.5 : 0))}%` }}
-              />
-            </div>
-            <div
-              className={`mt-1 text-xs ${context.level === "red" ? "font-medium text-red-600" : context.level === "amber" ? "font-medium text-amber-600" : "text-slate-500"}`}
-            >
-              Context: ≈{fmtInt(context.used)} / {fmtInt(context.window)} tokens ({context.pct.toFixed(1)}%)
-              {context.level === "amber" && " · Getting close to this model's limit. Consider starting a new conversation."}
-              {context.level === "red" && " · Near this model's limit: older messages will be dropped. Start a new conversation."}
-            </div>
-          </div>
-        )}
+        {selected && <ContextMeter context={context} />}
       </header>
 
       {/* Messages */}
@@ -373,86 +295,6 @@ export default function ChatPage() {
           )}
         </form>
       </footer>
-    </div>
-  );
-}
-
-function UserBubble({ m }: { m: Msg }) {
-  return (
-    <div className="ml-auto max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-sm bg-indigo-600 px-4 py-2 text-sm text-white">
-      {m.content}
-    </div>
-  );
-}
-
-function AssistantBubble({ m }: { m: Msg }) {
-  const fellBack = m.status === "done" && m.requestedModelName && m.modelName && m.requestedModelName !== m.modelName;
-  return (
-    <div className="max-w-full rounded-2xl rounded-bl-sm border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm">
-      {m.notices?.map((n, i) => (
-        <div key={i} className="mb-2 rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-800">
-          {n}
-        </div>
-      ))}
-
-      {m.status === "error" ? (
-        <div className="rounded border border-red-200 bg-red-50 p-2 text-red-700" role="alert">
-          {m.content}
-        </div>
-      ) : m.content ? (
-        <div className="prose-chat">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{prepareMarkdown(m.content)}</ReactMarkdown>
-          {m.status === "streaming" && <span className="ml-0.5 inline-block h-4 w-1.5 animate-pulse bg-slate-400 align-middle" />}
-        </div>
-      ) : m.status === "streaming" ? (
-        <div className="text-slate-500">
-          <span className="animate-pulse">{m.modelName ? `${m.modelName} is thinking…` : "Searching the knowledge base…"}</span>
-        </div>
-      ) : (
-        <div className="text-slate-500">Stopped.</div>
-      )}
-
-      {m.status === "stopped" && m.content && <div className="mt-1 text-xs text-slate-500">(stopped)</div>}
-
-      {(m.status === "done" || m.status === "stopped") && m.modelName && (
-        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-slate-100 pt-2 text-xs text-slate-500">
-          <span>
-            Answered by <strong className="text-slate-700">{m.modelName}</strong>
-            {fellBack && <span className="text-amber-700"> (backup: {m.requestedModelName} was unavailable)</span>}
-          </span>
-          {m.usage && (
-            <span>
-              {fmtInt(m.usage.inputTokens)} in · {fmtInt(m.usage.outputTokens)} out · {fmtCost(m.usage.cost)}
-            </span>
-          )}
-        </div>
-      )}
-
-      {m.sources && m.status !== "error" && (
-        <details className="mt-2 text-xs">
-          <summary className="cursor-pointer select-none text-slate-500 hover:text-slate-800">
-            {m.sources.length ? `Sources (${m.sources.length} passages)` : "No matching passages in the knowledge base"}
-          </summary>
-          <div className="mt-2 flex flex-col gap-2">
-            {m.sources.map((s) => (
-              <div key={s.id} className="rounded border border-slate-200 bg-slate-50 p-2">
-                <div className="mb-1 font-medium text-slate-700">
-                  <code className="mr-1 rounded bg-indigo-100 px-1 text-indigo-700">{s.label}</code>
-                  {s.docTitle} › {s.section}
-                  <span className="font-normal text-slate-500">
-                    {" "}
-                    · {s.file}
-                    {s.date ? ` · ${s.date}` : ""}
-                  </span>
-                </div>
-                <div className="prose-chat prose-source">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{s.text}</ReactMarkdown>
-                </div>
-              </div>
-            ))}
-          </div>
-        </details>
-      )}
     </div>
   );
 }

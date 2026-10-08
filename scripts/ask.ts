@@ -1,4 +1,4 @@
-/** CLI client for /api/chat. Usage: npx tsx scripts/ask.ts <modelId> "question" ["follow-up" ...] */
+/** CLI client for /api/chat. Usage: npm run ask -- <modelId> "question" ["follow-up" ...] */
 const BASE = process.env.BASE_URL ?? "http://localhost:3000";
 
 export async function ask(modelId: string, messages: { role: "user" | "assistant"; content: string }[]) {

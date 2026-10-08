@@ -1,6 +1,4 @@
-import type { Chunk, DocType, Product } from "./types";
-
-const PRODUCTS: Product[] = ["relay", "vault", "pulse", "ledger"];
+import { PRODUCTS, type Chunk, type DocType, type Product } from "./types";
 
 function slug(s: string): string {
   return s

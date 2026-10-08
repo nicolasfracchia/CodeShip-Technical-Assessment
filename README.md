@@ -1,128 +1,58 @@
 # NimbusStack Knowledge Assistant
 
-An internal chatbot that answers NimbusStack product questions **only from the supplied knowledge base**, with cited source passages, streaming answers, model switching across providers with automatic fallback, and per-message token and cost tracking.
+An internal chatbot that answers questions about NimbusStack's four products **only from the supplied knowledge base**. Every answer cites its source passages and flags documents that disagree. If the knowledge base doesn't cover a question, the bot says so instead of guessing. You can switch AI providers at any time, a backup provider takes over automatically if one fails, and each answer shows its token count and cost.
 
 - **Live demo:** https://codeship-technical-assessment.vercel.app
-- **Stack:** Next.js 16 (App Router) · TypeScript · Vercel AI SDK 7 · Tailwind 4 · Vitest
-- **Knowledge base:** `nimbusstack-knowledge-base/` (used as-is, never edited)
-
----
+- **Stack:** Next.js 16 · TypeScript · Vercel AI SDK 7 · Tailwind 4 · Vitest
 
 ## Run it locally
 
-Requires **Node.js 22+** (the AI SDK 7 minimum).
+Requires **Node.js 22+**.
 
 ```bash
 git clone https://github.com/nicolasfracchia/CodeShip-Technical-Assessment.git
 cd CodeShip-Technical-Assessment
 npm install
-cp .env.example .env.local      # then paste at least one API key (GROQ_API_KEY recommended)
+cp .env.example .env.local      # add at least one API key (GROQ_API_KEY recommended, free)
 npm run dev                     # http://localhost:3000
 ```
 
-One key is enough. Every provider without a key is shown as *unavailable* in the dropdown and skipped by the fallback chain. All keys used here come from free tiers (links in `.env.example`).
+One key is enough. Providers without a key show as *unavailable* in the dropdown and are skipped by the fallback. Free-tier key links are in `.env.example`.
 
 | Command | What it does |
 |---|---|
-| `npm run dev` | Builds the KB index, starts the dev server |
+| `npm run dev` | Builds the knowledge-base index and starts the dev server |
 | `npm run build && npm start` | Production build and server |
-| `npm test` | Unit tests: retrieval, chunking, fallback, E8, E9, cost, key exposure (offline, no keys needed) |
-| `npm run eval` | Live end-to-end eval of Q1–Q6, E1–E6 (including a false-conflict check) and E10 against a running server (writes `eval-results.md`) |
-| `npm run check:bundle` | After `npm run build`: fails if any API key value or key pattern is in the browser bundle |
+| `npm test` | Offline unit tests (no keys needed) |
+| `npm run typecheck` | TypeScript check |
+| `npm run eval` | Live end-to-end eval of the brief's questions and edge cases against a running server; writes `docs/eval-results.md` |
+| `npm run ask -- <modelId> "question"` | Ask the running server one question from the terminal |
+| `npm run probe -- "question"` | Show which passages retrieval picks, without calling a model |
+| `npm run check:bundle` | After a build: fails if any API key is in the browser bundle |
 
-`BASE_URL=https://<deployment> MODEL=gemini-flash-lite EVAL_DELAY_MS=20000 npm run eval` runs the eval against any deployment and model.
-
-### Deploy to Vercel
-
-1. Import the repo in the Vercel dashboard. `vercel.json` pins the framework to Next.js, so there are no build settings to change.
-2. Add the keys from `.env.example` under **Settings → Environment Variables**. Paste only the value, with no spaces around it.
-3. Deploy. If you add or change keys later, **redeploy**: environment variables only reach new deployments.
-
-The KB index is generated at build time (`prebuild`), so the function never reads markdown at runtime. The build needs no keys. With no keys at all, the app still loads and explains that no provider is configured.
-
-**"No Output Directory named 'public' found"** means the Vercel project was created with the "Other" framework preset (for example, imported before `package.json` existed). `vercel.json` now forces Next.js. If the error persists, open **Settings → Build & Deployment**, set Framework Preset to **Next.js**, and turn off any Output Directory override.
-
----
-
-## How it works
+## Project layout
 
 ```
-Browser ──POST /api/chat {messages, modelId}──► Next.js route (server only; keys live here)
-                                                 1. validate: blank message → 400, no AI call (E10)
-                                                 2. build retrieval query from conversation (E1)
-                                                 3. BM25 + synonyms + product fan-out over KB chunks (R2)
-                                                 4. grounded prompt: sources attached to the latest turn
-                                                 5. provider chain from config/models.json (R3)
-◄── NDJSON stream: sources │ start │ delta… │ reset │ done{usage, cost, model that answered} │ error
+config/models.json             every model, price, context window and the fallback order
+nimbusstack-knowledge-base/    the client's documents, used as-is
+src/app/                       chat page and the /api/chat and /api/models routes
+src/components/chat/           message bubbles and the context meter
+src/lib/kb/                    chunking, retrieval, follow-up handling
+src/lib/llm/                   providers, fallback chain, error handling, cost
+src/lib/prompt.ts              grounding rules and source formatting
+scripts/                       KB build, eval, CLI tools, bundle key scan
+tests/                         unit tests
+docs/                          documentation (below)
 ```
 
-| Path | Role |
-|---|---|
-| `config/models.json` | **All** model data: names, descriptions, prices, context windows, default model, fallback order. Nothing is hard-coded. |
-| `scripts/build-kb.ts` → `src/lib/kb/chunker.ts` | Splits each markdown file by `##` section and attaches metadata (product, doc type, date, release version) |
-| `src/lib/kb/retrieval.ts` | BM25 with a domain synonym map, product scoping and fan-out, version boost |
-| `src/lib/kb/context.ts` | Follow-up handling: carries the product and topic over from earlier turns |
-| `src/lib/prompt.ts` | Grounding rules, source formatting, staleness hints, history trimming |
-| `src/lib/llm/chat.ts` | Streaming with fallback, timeouts and `reset` events |
-| `src/lib/llm/errors.ts` | Sorts provider errors into rate limit / auth / quota / unavailable / timeout, with user-facing messages |
-| `src/app/page.tsx` | Chat UI |
+`AGENTS.md` stays in the root because `next dev` regenerates it there.
 
-### Key decisions
+## Documentation
 
-**Retrieval: BM25 with synonyms, not embeddings.** The KB is 10 files and 38 sections (about 5k tokens). Lexical search plus a domain synonym map (SSO ↔ SAML ↔ single sign-on ↔ federated login ↔ OIDC, 403 ↔ forbidden, SLA ↔ response time, …) is deterministic, unit-testable, free, and adds no API dependency or point of failure. With a much larger KB, I'd add embeddings and a reranker.
-
-**Chunks are whole `##` sections.** A table is never separated from its header row, so "P1 for Pro" always comes from the right row and column (E6). Each chunk carries its product, doc type, document date and release version.
-
-**Completeness for cross-product questions.** If a question names no product ("which of our products…"), retrieval takes the best sections *per product* plus the company-wide docs, so Q5 and Q6 always see all four products.
-
-**Follow-ups (E1) are deterministic.** If the latest message names no product, the products from the most recent earlier question carry over. Short or pronoun questions ("what about its SLA?") also get the previous question's text added. This avoids an extra LLM call (latency, cost, another point of failure) and is covered by unit tests.
-
-**Grounding (the one rule).** Sources are attached to the latest user turn, labelled `[S1]…[Sn]` with file, section, doc type and date. The system prompt requires: facts only from sources, a citation on every claim, an exact "not in the knowledge base" sentence (E2), explicit "Not in the knowledge base:" lines for partial answers (E3), "⚠️ Sources disagree" with both citations and dates (E4), exact row and column reads for tables (E6), and every product covered for cross-product questions. Temperature 0. Every answer shows its source passages in the UI.
-
-**Conflict detection (E4).** On top of the prompt rule, any company-wide summary that is *older* than product docs or release notes in the same source set gets a note in its header asking the model to compare them. This is purely date-based, not hard-coded to the known conflicts. It was added because one model (gpt-oss) missed the Vault SAML conflict without it. The note fires only when the company-wide passage actually **names** that product. A first version fired on any older company-wide doc, which made Cohere invent a "conflict" between the support policy's P2 *definition* and the Relay SLA table; the eval now has a case (`E4-none`) that fails on false conflicts. Known trade-off: with the stricter wording, the Cohere fallback answers the Vault SAML question correctly (Pro: yes) but doesn't flag the older overview. The default model (Groq) flags it.
-
-**Per-question reminders.** Instructions near the question get more weight than rules deep in the system prompt. For integration questions only, a one-line reminder after the question asks for both the product version and the partner requirement. Without it, gpt-oss answered Q2 with "Vault 3.1" and dropped "Salesforce API v58".
-
-**Reasoning effort is measured, not guessed.** Groq gpt-oss runs at `reasoningEffort: medium`. At `low`, the eval dropped from 18/19 to 16/19, and every new failure was a missed document conflict.
-
-**Fallback (R3, R5, E8, E9).** The chain is the selected model first, then `fallbackOrder`, skipping models with no key or that are disabled. Each step of the stream races a timer (20 s to first token, 20 s idle), so a hung provider can't stall the chain. If a provider fails *after* it started streaming, the server sends `reset`, the client discards the partial text, and the backup starts clean: the user never sees two models mixed. The final `done` event names the model that actually answered, and the UI says when the backup was used. If everything fails, the user gets an actionable message ("rate-limited, wait about N seconds"), never a stack trace.
-
-**Usage (R4).** Token counts come from the provider's own usage report. Cost = tokens × the config's list price (USD per 1M tokens). All models here run on free tiers, so the real charge is $0; the app shows what the same usage would cost at paid list prices. Session totals update after each message, and usage exports as CSV or JSON. The context meter shows (last input + last output tokens) ÷ the **selected** model's window, turns amber at 75% and red at 90%, and recalculates the moment the model changes (E7). The server also trims the oldest turns to fit small windows (Cloudflare Llama: 24K).
-
-**Default model: Groq GPT-OSS 120B.** Measured, not assumed: Gemini 3.5 Flash's free tier is **20 requests/day** (`GenerateRequestsPerDayPerProjectPerModel-FreeTier: 20`), which testers would use up quickly. Groq gives 1,000 requests/day and 8K tokens/min with about 1–2 s answers. The Gemini models are next in the fallback chain.
-
-### Providers
-
-| Dropdown entry | Provider | Status |
-|---|---|---|
-| GPT-OSS 120B | Groq | Live, **default** |
-| Gemini 3.1 Flash-Lite / Gemini 3.5 Flash | Google AI Studio | Live (3.5 Flash: 20 requests/day on the free tier) |
-| Llama 3.3 70B | Cloudflare Workers AI | Live, 24K context: the easiest way to see the context warning |
-| Nemotron 3 Super | OpenRouter (free pool) | Live, shared rate limits |
-| Command A | Cohere | Live, trial key |
-| GLM-4.5 Flash | Z.ai | Live, slower reasoning model |
-| Claude Sonnet 5.5 | Anthropic | **Placeholder**: set `ANTHROPIC_API_KEY` to enable (uses Anthropic's OpenAI-compatible endpoint) |
-| GPT-5.4 mini | OpenAI | **Placeholder**: set `OPENAI_API_KEY` to enable |
-| Llama 3.3 70B | SambaNova | Disabled in config (account requires a payment method) |
-
-Adding a provider means adding a config entry: any OpenAI-compatible API needs only `baseURL` and `apiKeyEnv`.
-
-### Things the knowledge base gets wrong or leaves ambiguous
-
-The documents were used as-is. These are the places the bot has to handle carefully, and the eval checks them:
-
-1. **Vault SSO tiers disagree.** The security overview (2026-01-15) says SAML is Enterprise only; `vault.md` (2026-07-03) and the 3.1 release notes (2026-04-14) say Pro and Enterprise.
-2. **Relay Pro price.** `relay.md` says $49. The 4.2 release notes say $59 for contracts signed on or after 1 Aug 2026.
-3. **Pulse has no SAML** (OIDC only; SAML is on the roadmap). For "which products support SAML", that's a "no", not an omission.
-4. **"v4.2"** exists only for Relay. Pulse has 4.1 and 4.3. Vault (3.x) and Ledger (2.x) don't use 4.x versions.
-5. **403 troubleshooting** exists for Relay and Pulse only, with different steps.
-6. **Salesforce.** Pulse needs ≥4.3 and API v59; Vault needs ≥3.1 and API v58; Relay is *not supported* (a community Zapier bridge exists); for Ledger, the product page says "coming soon in the 2.6 roadmap" while the release notes say "planned for a later release".
-7. **SLA tables** differ by product *and* tier, and Pulse's tiers are named Growth/Pro/Enterprise.
-
-### Not built, and why
-
-The brief doesn't require these: login, prompt caching (the KB is tiny), persisted chats, a KB editor, analytics. Conversation state lives in the browser tab. "New Conversation" clears it.
-
-### Build timeline
-
-See [`BUILD_LOG.md`](BUILD_LOG.md). The git tag **`first-hour`** marks the exact state at the 60-minute mark. `git diff first-hour..HEAD` shows everything built afterwards.
+- **[Architecture and key decisions](docs/architecture.md)**: the request flow, a map of the code, and why each main choice was made (BM25 retrieval, section chunks, grounding rules, conflict handling, fallback, usage tracking, default model). It also lists the providers and the places where the knowledge base contradicts itself.
+- **[Deficiencies and next steps](docs/deficiencies-and-next-steps.md)**: an honest review of what is weak and why, how to fix each issue, the stages every question should go through to get the best answer, and where to rely on models versus where people must decide.
+- **[Comparison with the RTDRS Hearing Assistant](docs/comparison-with-rtdrs.md)**: what this project shares with my earlier RTDRS project, and which of its deficiencies RTDRS already solves (hybrid retrieval, ingestion, structured output, access control, logging, CI).
+- **[Deploying to Vercel](docs/deployment.md)**: the three deployment steps, how to verify a deployment, and fixes for the two errors seen in practice.
+- **[Build log](docs/build-log.md)**: a timestamped record of the build. The git tag `first-hour` marks the state at the 60-minute mark; `git diff first-hour..HEAD` shows everything built afterwards.
+- **[Eval results](docs/eval-results.md)**: the latest full output of `npm run eval`, with every question and answer and its pass or fail.
+- **[Assessment brief](docs/assessment-brief.md)**: the original CodeShip brief this project answers, with requirements R1–R5 and edge cases E1–E10.

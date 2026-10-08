@@ -1,4 +1,4 @@
-import type { Chunk, KnowledgeBase, Product } from "./types";
+import { PRODUCTS, type Chunk, type KnowledgeBase, type Product } from "./types";
 
 /**
  * Lexical retrieval tuned for a small, structured KB:
@@ -9,8 +9,6 @@ import type { Chunk, KnowledgeBase, Product } from "./types";
  *     *per product* so "which of our products..." questions are complete.
  *  4. Version boost: "v4.2" pulls in the matching release-notes section.
  */
-
-export const PRODUCTS: Product[] = ["relay", "vault", "pulse", "ledger"];
 
 const PRODUCT_ALIASES: Record<Product, RegExp> = {
   relay: /\brelay\b|\bapi gateway\b|\bevent router\b/i,

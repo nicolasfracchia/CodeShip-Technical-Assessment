@@ -19,7 +19,7 @@ export interface RetrievalQuery {
  * Builds the retrieval query for the latest user message (edge case E1).
  * Deterministic, so it is fast, free and testable without an extra LLM call:
  *  - If the message names no product, inherit the products from the most recent
- *    earlier message (user first, then assistant) that named one.
+ *    earlier user message that named one (assistant text is never used for this).
  *    "what about its SLA?" after a Vault question -> Vault SLA.
  *  - If the message is short / topic-less ("and Enterprise?"), also append the
  *    previous user question so the topic carries over.

@@ -6,6 +6,7 @@ import remarkGfm from "remark-gfm";
 import type { StreamEvent, Failure } from "@/lib/events";
 import type { SourcePassage } from "@/lib/kb";
 import type { PublicModel } from "@/lib/llm/config";
+import { prepareMarkdown } from "@/lib/ui/citations";
 
 interface Usage {
   inputTokens: number;
@@ -31,10 +32,6 @@ const uid = () => Math.random().toString(36).slice(2);
 const fmtCost = (n: number) => (n === 0 ? "$0" : n < 0.0001 ? "<$0.0001" : `$${n.toFixed(4)}`);
 const fmtInt = (n: number) => n.toLocaleString("en-US");
 
-/** Normalizes citation styles some models use (【S2】) and makes [S2] a styled chip. */
-function prepareMarkdown(text: string): string {
-  return text.replace(/【\s*(S\d+)\s*】/g, "[$1]").replace(/\[(S\d+)\]/g, "`$1`");
-}
 
 const SUGGESTIONS = [
   "What are the key differences between the Pro and Enterprise pricing tiers?",

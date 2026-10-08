@@ -1,1 +1,47 @@
 @import "tailwindcss";
+
+/* Compact markdown styling for chat answers and source passages */
+.prose-chat {
+  line-height: 1.55;
+}
+.prose-chat > * + * {
+  margin-top: 0.5rem;
+}
+.prose-chat h1,
+.prose-chat h2,
+.prose-chat h3 {
+  font-weight: 600;
+  margin-top: 0.75rem;
+}
+.prose-chat h1 { font-size: 1.05rem; }
+.prose-chat h2 { font-size: 1rem; }
+.prose-chat h3 { font-size: 0.95rem; }
+.prose-chat ul { list-style: disc; padding-left: 1.25rem; }
+.prose-chat ol { list-style: decimal; padding-left: 1.25rem; }
+.prose-chat li + li { margin-top: 0.15rem; }
+.prose-chat strong { font-weight: 600; }
+.prose-chat code {
+  background: #e0e7ff;
+  color: #4338ca;
+  border-radius: 0.25rem;
+  padding: 0 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.prose-chat table {
+  display: block;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  max-width: 100%;
+}
+.prose-chat th,
+.prose-chat td {
+  border: 1px solid #e2e8f0;
+  padding: 0.25rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+.prose-chat th { background: #f8fafc; font-weight: 600; }
+.prose-source { color: #334155; }
+.prose-source code { background: #e2e8f0; color: #334155; font-weight: 400; }

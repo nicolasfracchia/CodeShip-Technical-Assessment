@@ -17,6 +17,8 @@ export interface SourcePassage {
   section: string;
   /** "product documentation" | "release notes" | "company-wide" */
   kind: string;
+  /** Product the passage belongs to; null for company-wide documents */
+  product: string | null;
   date: string | null;
   text: string;
   score: number;
@@ -36,6 +38,7 @@ export function retrieveForConversation(messages: ChatMessage[]): {
       file: r.chunk.file,
       docTitle: r.chunk.docTitle,
       section: r.chunk.section,
+      product: r.chunk.product,
       kind: r.chunk.docType === "company" ? "company-wide" : r.chunk.docType === "release-notes" ? "release notes" : "product documentation",
       date: r.chunk.date,
       text: r.chunk.text,

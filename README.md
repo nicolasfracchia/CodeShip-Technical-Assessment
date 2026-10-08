@@ -2,7 +2,7 @@
 
 An internal chatbot that answers NimbusStack product questions **only from the supplied knowledge base**, with cited source passages, streaming answers, model switching across providers with automatic fallback, and per-message token and cost tracking.
 
-- **Live demo:** _add the Vercel URL here_
+- **Live demo:** https://codeship-technical-assessment.vercel.app
 - **Stack:** Next.js 16 (App Router) · TypeScript · Vercel AI SDK 7 · Tailwind 4 · Vitest
 - **Knowledge base:** `nimbusstack-knowledge-base/` (used as-is, never edited)
 
@@ -27,7 +27,7 @@ One key is enough. Every provider without a key is shown as *unavailable* in the
 | `npm run dev` | Builds the KB index, starts the dev server |
 | `npm run build && npm start` | Production build and server |
 | `npm test` | Unit tests: retrieval, chunking, fallback, E8, E9, cost, key exposure (offline, no keys needed) |
-| `npm run eval` | Live end-to-end eval of Q1–Q6, E1–E6 and E10 against a running server (writes `eval-results.md`) |
+| `npm run eval` | Live end-to-end eval of Q1–Q6, E1–E6 (including a false-conflict check) and E10 against a running server (writes `eval-results.md`) |
 | `npm run check:bundle` | After `npm run build`: fails if any API key value or key pattern is in the browser bundle |
 
 `BASE_URL=https://<deployment> MODEL=gemini-flash-lite EVAL_DELAY_MS=20000 npm run eval` runs the eval against any deployment and model.
@@ -79,7 +79,7 @@ Browser ──POST /api/chat {messages, modelId}──► Next.js route (server 
 
 **Grounding (the one rule).** Sources are attached to the latest user turn, labelled `[S1]…[Sn]` with file, section, doc type and date. The system prompt requires: facts only from sources, a citation on every claim, an exact "not in the knowledge base" sentence (E2), explicit "Not in the knowledge base:" lines for partial answers (E3), "⚠️ Sources disagree" with both citations and dates (E4), exact row and column reads for tables (E6), and every product covered for cross-product questions. Temperature 0. Every answer shows its source passages in the UI.
 
-**Conflict detection (E4).** On top of the prompt rule, any company-wide summary that is *older* than product docs or release notes in the same source set gets a note in its header asking the model to compare them. This is purely date-based, not hard-coded to the known conflicts. It was added because one model (gpt-oss) missed the Vault SAML conflict without it.
+**Conflict detection (E4).** On top of the prompt rule, any company-wide summary that is *older* than product docs or release notes in the same source set gets a note in its header asking the model to compare them. This is purely date-based, not hard-coded to the known conflicts. It was added because one model (gpt-oss) missed the Vault SAML conflict without it. The note fires only when the company-wide passage actually **names** that product. A first version fired on any older company-wide doc, which made Cohere invent a "conflict" between the support policy's P2 *definition* and the Relay SLA table; the eval now has a case (`E4-none`) that fails on false conflicts. Known trade-off: with the stricter wording, the Cohere fallback answers the Vault SAML question correctly (Pro: yes) but doesn't flag the older overview. The default model (Groq) flags it.
 
 **Per-question reminders.** Instructions near the question get more weight than rules deep in the system prompt. For integration questions only, a one-line reminder after the question asks for both the product version and the partner requirement. Without it, gpt-oss answered Q2 with "Vault 3.1" and dropped "Salesforce API v58".
 

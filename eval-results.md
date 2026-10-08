@@ -1,6 +1,6 @@
 # Eval results
 
-Model: `groq-gpt-oss` · Base: http://localhost:3100 · 2026-10-08T03:31:06.313Z
+Model: `groq-gpt-oss` · Base: http://localhost:3100 · 2026-10-08T05:03:52.696Z
 
 ## E10 blank message: PASS (HTTP 400)
 
@@ -10,19 +10,18 @@ Model: `groq-gpt-oss` · Base: http://localhost:3100 · 2026-10-08T03:31:06.313Z
 
 Answered by `groq-gpt-oss`
 
-**Key differences between the Pro and Enterprise tiers per product**
+**Key differences between the Pro and Enterprise pricing tiers**
 
-| Product | Price (per month) | Capacity / Limits | Notable Feature Differences | Support plan |
-|---|---|---|---|---|
-| **Nimbus Vault** | Pro $35/seat [​S1] • Enterprise Custom/price not listed [​S1] | Secrets: 10 k (Pro) vs Unlimited (Enterprise) [​S1] | HSM-backed keys: No (Pro) vs Yes (Enterprise) [​S1]; Audit-log retention: 180 days vs 400 days [​S1] | Standard (Pro) vs Premium (Enterprise) [​S1] |
-| **Nimbus Pulse** | Pro $299/workspace [​S2] • Enterprise Custom [​S2] | Monthly events: 50 M (Pro) vs Custom [​S2] | Warehouse export: Snowflake only (Pro) vs Snowflake + BigQuery (Enterprise) [​S2]; Session replay: Yes on both tiers [​S2] | Standard (Pro) vs Premium (Enterprise) [​S2] |
-| **Nimbus Ledger** | Pro $199 [​S3] • Enterprise Custom [​S3] | Invoiced volume included: $500 k (Pro) vs Custom [​S3] | No tier-specific feature gaps - SAML 2.0 login, dunning, and support level are the same across tiers [​S3] | Standard (Pro) vs Premium (Enterprise) [​S3] |
-| **Nimbus Relay** | Pro $49/seat [​S4] **or** $59/seat for new contracts [​S5] • Enterprise Custom [​S4] | Seats: 25 (Pro) vs Unlimited (Enterprise) [​S4]; API rate limit: 10 k req/min vs 100 k req/min [​S4] | Single sign-on: No (Pro) vs SAML 2.0 (Enterprise) [​S4]; Audit-log retention: 90 days vs 400 days [​S4]; Request replay & EU regional routing only on Enterprise [​S4] | Standard (Pro) vs Premium (Enterprise) [​S4] |
+| Product | Pro tier (per source) | Enterprise tier (per source) | Main differences |
+|---|---|---|---|
+| **Nimbus Vault** | $35/seat · 10,000 secrets · SAML 2.0 · No HSM-backed keys · 180-day audit log · Standard support【S1】 | Custom price · Unlimited secrets · SAML 2.0 · Yes HSM-backed keys · 400-day audit log · Premium support【S1】 | • Unlimited secrets & HSM-backed keys only in Enterprise<br>• Longer audit-log retention (400 d vs 180 d)<br>• Higher-level support |
+| **Nimbus Pulse** | $299/workspace · 50 M events · Session replay · Snowflake export · Standard support【S2】 | Custom price · Custom events · Session replay · Snowflake + BigQuery export · Premium support【S2】 | • Export to BigQuery only in Enterprise<br>• Event volume and price are custom in Enterprise |
+| **Nimbus Ledger** | $199/month · $500 k invoiced volume included · SAML 2.0 login · Dunning · Standard support【S3】 | Custom price · Custom invoiced-volume limit · SAML 2.0 login · Dunning · Premium support【S3】 | • Invoiced-volume cap lifted (custom) and support upgraded in Enterprise |
+| **Nimbus Relay** | $49/seat · 25 seats · 10 k req/min · No SSO · 90-day audit log · No request replay · US-only routing · Standard support【S4】<br>*(new contracts ≥ 1 Aug 2026: $59/seat)【S5】* | Custom price · Unlimited seats · 100 k req/min · SAML 2.0 · 400-day audit log · Request replay · US + EU routing · Premium support【S4】 | • Unlimited seats, higher rate limit, SAML 2.0, longer audit-log, request replay, EU routing, and Premium support are Enterprise-only |
+| **All products** | Standard or Standard-level support | Premium or custom-level support | Support plan upgrades across the board |
 
-⚠️ **Sources disagree:**  
-- **Relay Pro price** - $49 per seat per month in the product pricing table (S4, 2026-06-12) vs $59 per seat per month for new contracts signed on/after 1 Aug 2026 (S5, 2026-06-10). The release note is newer but specifies a conditional price change.  
-
-**Not in the knowledge base:** any exact Enterprise price figures (all list “Custom”).
+**⚠️ Sources disagree:**  
+- **Federated sign-in (SAML 2.0) for Nimbus Vault** - Company-wide overview lists SAML 2.0 **only on Enterprise**【S7】, while product documentation shows SAML 2.0 on **both Pro and Enterprise**【S1】 and release notes state it was extended to Pro in version 3.1【S6】 (2026-04-14). The newer product docs (2026-07-03) and release notes supersede the older company-wide summary.
 
 ## Q2-vault: PASS (Vault Salesforce version)
 
@@ -43,11 +42,12 @@ Yes - Nimbus Vault integrates with Salesforce.
 
 Answered by `groq-gpt-oss`
 
-Yes—Nimbus Pulse integrates with Salesforce, requiring at least version 4.3 and Salesforce API v59 or later (read-only sync of Accounts and Opportunities)【S1】.  
+Yes—Nimbus Pulse integrates with Salesforce.  
 
-- **Minimum Pulse version:** 4.3【S1】  
-- **Partner requirement:** Salesforce API v59 or later; read-only sync of Accounts and Opportunities【S1】  
-- **Release note confirmation:** Salesforce sync introduced in Pulse 4.3【S2】
+- Minimum Pulse version: **4.3**【S1】  
+- Partner requirement: **Salesforce API v59 or later; read-only sync of Accounts and Opportunities**【S1】  
+
+(Feature introduced in Pulse 4.3 release notes)【S2】
 
 ## Q2-relay: PASS (Relay: not supported (T6))
 
@@ -55,7 +55,7 @@ Yes—Nimbus Pulse integrates with Salesforce, requiring at least version 4.3 an
 
 Answered by `groq-gpt-oss`
 
-No - Nimbus Relay does **not** integrate with Salesforce. The integration is listed as “Not supported” (no Relay version applies) and the only note is that “A community Zapier bridge exists; NimbusStack does not support it.” [S1]
+Relay does **not** integrate with Salesforce - the integration is listed as “Not supported” with no minimum Relay version, and the only option mentioned is a community Zapier bridge that NimbusStack does not support [S1].
 
 ## Q2-ledger: PASS (Ledger: roadmap only (T6))
 
@@ -63,9 +63,7 @@ No - Nimbus Relay does **not** integrate with Salesforce. The integration is lis
 
 Answered by `groq-gpt-oss`
 
-No, Nimbus Ledger does not currently integrate with Salesforce; it is listed as “coming soon” in the 2.6 roadmap and no partner requirement or version is published yet【S1】【S2】.
-
-**Not in the knowledge base:** the minimum Ledger version and partner requirement for a Salesforce integration (since the integration is not yet released).
+No, Ledger does not currently integrate with Salesforce; it is listed as “coming soon” in the 2.6 roadmap with no partner requirement published yet【S1】【S2】.
 
 ## Q3-relay: PASS (Relay 4.2 release notes)
 
@@ -73,10 +71,10 @@ No, Nimbus Ledger does not currently integrate with Salesforce; it is listed as 
 
 Answered by `groq-gpt-oss`
 
-v4.2 added two new features to Nimbus Relay [​S1​]:
+In v 4.2 Nimbus Relay added:
 
-- **Request replay** - replay any request from the last 7 days against a staging endpoint (Enterprise tier).  
-- **Regional routing** - an EU endpoint (`eu.relay.nimbusstack.com`) with data residency in Frankfurt (Enterprise tier).
+- **Request replay** - replay any request from the last 7 days against a staging endpoint (Enterprise tier)【S1】  
+- **Regional routing** - a new EU endpoint (`eu.relay.nimbusstack.com`) with data residency in Frankfurt (Enterprise tier)【S1】
 
 ## Q3-pulse: PASS (No Pulse 4.2 exists (T4))
 
@@ -85,7 +83,7 @@ v4.2 added two new features to Nimbus Relay [​S1​]:
 Answered by `groq-gpt-oss`
 
 I couldn't find this in the NimbusStack knowledge base.  
-The available sources cover new features for versions 4.1 and 4.3, but not for 4.2.
+The sources detail new features for versions 4.1 and 4.3, but not for 4.2.
 
 ## Q4: PASS (403: Relay + Pulse steps (T5))
 
@@ -93,33 +91,27 @@ The available sources cover new features for versions 4.1 and 4.3, but not for 4
 
 Answered by `groq-gpt-oss`
 
-**First check for a 403 error**
+- **Nimbus Pulse:** Verify that the user who owns the API key is a member of the workspace the project belongs to — that’s the first check for a 403 error [S1].
 
-| Product | First thing to verify |
-|---|---|
-| Nimbus Pulse | The user who owns the API key is a member of the workspace the project belongs to. [S1] |
-| Nimbus Relay | The token’s scope includes the route being called. [S2] |
+- **Nimbus Relay:** Verify that the token’s scope includes the route being called (scopes are per-route since Relay 4.0) — that’s the first check for a 403 error [S2].
 
-## Q5: FAIL (SAML: all four products, Pulse no, Vault conflict (T1, T3))
+## Q5: PASS (SAML: all four products, Pulse no, Vault conflict (T1, T3))
 
 > Which of our products support SSO via SAML 2.0?
 
-Answered by `groq-gpt-oss` · missing: /OIDC|OpenID/i
+Answered by `groq-gpt-oss`
 
-SSO via SAML 2.0 is available in Nimbus Relay (Enterprise), Nimbus Vault (Pro & Enterprise), and Nimbus Ledger (all tiers); Nimbus Pulse does not support it.  
+Nimbus Relay - Enterprise tier; Nimbus Vault - Pro and Enterprise tiers; Nimbus Ledger - all tiers support SAML 2.0 SSO.  
 
-| Product | Tier(s) with SAML 2.0 |
+| Product | Tier(s) with SAML 2.0 SSO |
 |---|---|
-| Nimbus Relay | Enterprise [​S7] |
-| Nimbus Vault | Pro, Enterprise [​S4] |
-| Nimbus Ledger | Starter, Pro, Enterprise [​S5] |
-| Nimbus Pulse | None (SAML 2.0 on roadmap) [​S1] |
+| Nimbus Relay | Enterprise |
+| Nimbus Vault | Pro, Enterprise |
+| Nimbus Ledger | Starter, Pro, Enterprise |
+| Nimbus Pulse | *none* |
 
 ⚠️ **Sources disagree:**  
-- S2 (2026-01-15) lists SAML 2.0 for Nimbus Vault only on Enterprise [​S2].  
-- S4 (2026-07-03) lists SAML 2.0 for Nimbus Vault on both Pro and Enterprise [​S4].  
-
-The later pricing table (S4) reflects the updated support.  
+- **Nimbus Vault SAML 2.0 availability** - Company-wide summary lists “Enterprise only” [S2] (2026-01-15); product pricing table lists “Pro and Enterprise” [S4] (2026-07-03); release notes state “SAML 2.0 federated sign-in extended to the Pro tier” [S8] (2026-04-14).
 
 ## Q6: PASS (P1 SLA per product and tier (T7))
 
@@ -127,22 +119,14 @@ The later pricing table (S4) reflects the updated support.
 
 Answered by `groq-gpt-oss`
 
-**Priority 1 (P1) first-human-reply SLA varies by product and tier:**  
+**Priority 1 (P1) response times per product and tier**
 
-| Product | Tier | P1 SLA |
-|---|---|---|
-| Nimbus Pulse | Growth | Next business day【S1】 |
-| Nimbus Pulse | Pro | 4 hours【S1】 |
-| Nimbus Pulse | Enterprise | 1 hour, 24×7【S1】 |
-| Nimbus Vault | Starter | 4 business hours【S2】 |
-| Nimbus Vault | Pro | 1 hour【S2】 |
-| Nimbus Vault | Enterprise | 30 minutes, 24×7【S2】 |
-| Nimbus Relay | Starter | 8 business hours【S3】 |
-| Nimbus Relay | Pro | 2 hours【S3】 |
-| Nimbus Relay | Enterprise | 15 minutes, 24×7【S3】 |
-| Nimbus Ledger | Starter | 8 business hours【S4】 |
-| Nimbus Ledger | Pro | 2 hours【S4】 |
-| Nimbus Ledger | Enterprise | 30 minutes, 24×7【S4】 |
+| Product | Starter | Pro | Enterprise |
+|---|---|---|---|
+| Nimbus Pulse | Next business day【S1】 | 4 hours【S1】 | 1 hour, 24×7【S1】 |
+| Nimbus Vault | 4 business hours【S2】 | 1 hour【S2】 | 30 minutes, 24×7【S2】 |
+| Nimbus Relay | 8 business hours【S3】 | 2 hours【S3】 | 15 minutes, 24×7【S3】 |
+| Nimbus Ledger | 8 business hours【S4】 | 2 hours【S4】 | 30 minutes, 24×7【S4】 |
 
 ## E1: PASS (Follow-up resolves to Vault SLA)
 
@@ -152,16 +136,14 @@ Answered by `groq-gpt-oss`
 
 Answered by `groq-gpt-oss`
 
-Nimbus Vault’s support SLA specifies the first-human-reply times by priority and tier:
+Nimbus Vault’s support SLA response times are:
 
 | Priority | Starter | Pro | Enterprise |
 |---|---|---|---|
-| P1 (service down) | 4 business hours | 1 hour | 30 minutes, 24×7 |
-| P2 (degraded) | Next business day | 4 hours | 2 hours |
-| P3 (question) | 3 business days | 1 business day | 8 hours |
-| P4 (feature request) | Best effort | Best effort | 5 business days |
-
-[Source: S1]
+| **P1 (service down)** | 4 business hours | 1 hour | 30 minutes (24×7) |
+| **P2 (degraded)** | Next business day | 4 hours | 2 hours |
+| **P3 (question)** | 3 business days | 1 business day | 8 hours |
+| **P4 (feature request)** | Best effort | Best effort | 5 business days |【S1】
 
 ## E2-refund: PASS (Not in KB)
 
@@ -170,7 +152,7 @@ Nimbus Vault’s support SLA specifies the first-human-reply times by priority a
 Answered by `groq-gpt-oss`
 
 I couldn't find this in the NimbusStack knowledge base.  
-The available sources cover support plans, pricing tables, and support SLA details, but none mention a refund policy for annual plans.
+The available sources cover support plans, pricing tables, and support SLA details, but do not mention a refund policy for annual plans. [S1][S2][S9]
 
 ## E2-offtopic: PASS (Off-topic)
 
@@ -179,7 +161,7 @@ The available sources cover support plans, pricing tables, and support SLA detai
 Answered by `groq-gpt-oss`
 
 I couldn't find this in the NimbusStack knowledge base.  
-The knowledge base covers NimbusStack product details, not geographic information.
+The knowledge base covers information about NimbusStack products such as Relay, Vault, Pulse, and Ledger.
 
 ## E3: PASS (Partial answer)
 
@@ -187,9 +169,8 @@ The knowledge base covers NimbusStack product details, not geographic informatio
 
 Answered by `groq-gpt-oss`
 
-Vault Pro costs **$35 per seat per month** on an annual plan【S1】.
-
-**Not in the knowledge base:** information on whether Vault is SOC 2 certified.
+Vault Pro costs **$35 per seat per month** on an annual plan【S1】.  
+**Not in the knowledge base:** SOC 2 certification status for Nimbus Vault.
 
 ## E4: PASS (Conflict surfaced (Vault SAML tiers))
 
@@ -197,11 +178,19 @@ Vault Pro costs **$35 per seat per month** on an annual plan【S1】.
 
 Answered by `groq-gpt-oss`
 
-Yes - Vault Pro includes SAML 2.0 single sign-on. [S1][S3]  
+Yes - the Pro tier of Nimbus Vault includes SAML 2.0 single sign-on. [S1][S3]
 
 ⚠️ **Sources disagree:**  
-- S2 (2026-01-15) lists SAML 2.0 only on the Enterprise tier. [S2]  
-- S1 (2026-07-03) and S3 (2026-04-14) show SAML 2.0 available on the Pro tier. [S1][S3]  
+- S2 (2026-01-15) lists SAML 2.0 only for the Enterprise tier. [S2]  
+- S1 (2026-07-03) and S3 (2026-04-14) show SAML 2.0 available on the Pro tier. [S1][S3]
+
+## E4-none: PASS (No false conflict on a plain SLA lookup)
+
+> What is the P2 SLA for Relay Pro?
+
+Answered by `groq-gpt-oss`
+
+The P2 SLA for Nimbus Relay Pro is **8 hours** response time to the first human reply. 【S1】
 
 ## E5: PASS (Loose wording finds SAML)
 
@@ -209,7 +198,7 @@ Yes - Vault Pro includes SAML 2.0 single sign-on. [S1][S3]
 
 Answered by `groq-gpt-oss`
 
-Yes—Nimbus Ledger provides single sign-on via SAML 2.0 on every tier【S1】【S2】【S3】.
+Yes—Nimbus Ledger provides single sign-on via SAML 2.0 in every tier【S1】【S2】【S3】.
 
 ## E6-a: PASS (Exact table cell)
 
@@ -217,7 +206,7 @@ Yes—Nimbus Ledger provides single sign-on via SAML 2.0 on every tier【S1】�
 
 Answered by `groq-gpt-oss`
 
-The P2 response time for Vault Pro is **4 hours**【S1】.
+The P2 response time for Nimbus Vault Pro is **4 hours**【S1】.
 
 ## E6-b: PASS (Exact table cell)
 
@@ -225,7 +214,7 @@ The P2 response time for Vault Pro is **4 hours**【S1】.
 
 Answered by `groq-gpt-oss`
 
-The P3 SLA for Relay Enterprise customers is a response within **8 hours**.【S1】
+8 hours for the first human reply to a P3 (question) ticket for Relay Enterprise customers. [S1]
 
 
-**18/19 passed**
+**20/20 passed**

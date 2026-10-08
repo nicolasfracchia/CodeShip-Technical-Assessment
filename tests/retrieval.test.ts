@@ -100,3 +100,18 @@ describe("conversation context (E1)", () => {
     expect(q.products).toEqual(["pulse"]);
   });
 });
+
+describe("staleness hint", () => {
+  it("fires for the security overview on a Vault SAML question (real conflict, E4)", async () => {
+    const { stalenessNote } = await import("@/lib/prompt");
+    const src = retrieveForConversation([{ role: "user", content: "Does Vault Pro support SAML single sign-on?" }]).sources;
+    const overview = src.find((s) => s.id === "security-overview.md#identity")!;
+    expect(stalenessNote(overview, src)).toMatch(/OLDER than/);
+  });
+
+  it("does not fire for generic policy text on an SLA question (no false conflicts)", async () => {
+    const { stalenessNote } = await import("@/lib/prompt");
+    const src = retrieveForConversation([{ role: "user", content: "What is the P2 SLA for Relay Pro?" }]).sources;
+    for (const s of src) expect(stalenessNote(s, src)).toBe("");
+  });
+});

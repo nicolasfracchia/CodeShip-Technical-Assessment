@@ -37,6 +37,7 @@ const CASES: Case[] = [
   { id: "E2-offtopic", note: "Off-topic", turns: ["What is the capital of France?"], must: [NOT_IN_KB], mustNot: [/Paris/] },
   { id: "E3", note: "Partial answer", turns: ["What does Vault Pro cost per seat, and is Vault SOC 2 certified?"], must: [/\$35/, /not in the knowledge base|not (mentioned|covered|documented)|doesn't (mention|cover)|does not (mention|cover)/i] },
   { id: "E4", note: "Conflict surfaced (Vault SAML tiers)", turns: ["Does Vault Pro support SAML single sign-on?"], must: [/disagree|conflict/i, /2026-01-15|security overview/i] },
+  { id: "E4-none", note: "No false conflict on a plain SLA lookup", turns: ["What is the P2 SLA for Relay Pro?"], must: [/8 hours/], mustNot: [/disagree|conflict/i] },
   { id: "E5", note: "Loose wording finds SAML", turns: ["does ledger do single sign-on?"], must: [/SAML/i] },
   { id: "E6-a", note: "Exact table cell", turns: ["What is the P2 response time for Vault Pro?"], must: [/4 hours/], mustNot: [/\b2 hours\b/] },
   { id: "E6-b", note: "Exact table cell", turns: ["What is the P3 SLA for Relay Enterprise customers?"], must: [/8 hours/], mustNot: [/1 business day/] },

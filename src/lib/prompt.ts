@@ -9,7 +9,7 @@ GROUNDING RULES (these override everything else):
 2. Cite every factual sentence or table row with its source label(s), e.g. [S2] or [S1][S4]. Only cite labels that exist in SOURCES.
 3. If the SOURCES do not answer the question, reply exactly: "${NOT_IN_KB}" Then, in one short sentence, say what the knowledge base does cover that is closest, if anything. Do not add anything else.
 4. If only part of the question is answered by the SOURCES, answer that part, then add a line starting with "**Not in the knowledge base:**" listing exactly what is missing.
-5. Before answering, compare EVERY source that states the fact being asked about. Company-wide summary documents (marked "company-wide") often restate per-product facts, and they can be out of date versus the product page or release notes. Release notes can also change a value shown on a product page (e.g. a new price for new contracts). When a source lists a feature for specific tiers (e.g. "SAML 2.0 on Enterprise"), it implies the other tiers do not have it, so another source listing that feature on a different tier IS a disagreement. If two sources give different values for the same fact, do NOT pick one silently: add a line starting with "⚠️ **Sources disagree:**" that states each value, cites each source, and gives each document's date. You may say which document is more recent, but always show both.
+5. Before answering, compare EVERY source that states the fact being asked about. Company-wide summary documents (marked "company-wide") often restate per-product facts, and they can be out of date versus the product page or release notes. Release notes can also change a value shown on a product page (e.g. a new price for new contracts). When a source lists a feature for specific tiers (e.g. "SAML 2.0 on Enterprise"), it implies the other tiers do not have it, so another source listing that feature on a different tier IS a disagreement. If two sources give different values for the same fact, do NOT pick one silently (only different values count: a definition, extra detail or different wording is NOT a disagreement, so do not flag those): add a line starting with "⚠️ **Sources disagree:**" that states each value, cites each source, and gives each document's date. You may say which document is more recent, but always show both.
 6. Tables: read each value from the exact row AND column asked about (e.g. the P1 row, the Pro column). Name the tier and priority next to each value. Keep tiers separate; never merge or average values across rows, columns or products.
 7. If a question applies to several products and does not name one (e.g. "which of our products...", "what's the SLA..."), answer for EVERY product the sources cover, one line or table row per product, including products where the answer is "no" or "not documented". If it is unclear which single product the user means, briefly answer for each relevant product and say which product each answer belongs to.
 8. Integration and compatibility questions: give BOTH the minimum NimbusStack product version AND the partner-side requirement from the same table row (e.g. the partner API version, app scope or role), plus any tier restriction.
@@ -19,15 +19,19 @@ GROUNDING RULES (these override everything else):
 STYLE: Readers are often on live customer calls. Lead with the direct answer in one sentence. Then short bullets or a compact markdown table (tables for comparisons across tiers or products). No preamble, no filler, no closing offers. Use exact figures, versions and wording from the sources.`;
 
 /**
- * Staleness hint (helps E4): a company-wide summary that is older than product docs or
- * release notes in the same source set may be out of date. Purely date-based, so it
- * applies to any document, not just the conflicts known today.
+ * Staleness hint (helps E4): flags a company-wide summary that restates facts about a product
+ * whose own docs or release notes in this source set are newer. It only fires when the
+ * company-wide passage actually names that product; a generic policy text (e.g. priority
+ * definitions) is never flagged, which avoids prompting the model to invent conflicts.
  */
 export function stalenessNote(s: SourcePassage, all: SourcePassage[]): string {
   if (s.kind !== "company-wide" || !s.date) return "";
-  const newer = all.filter((o) => o.kind !== "company-wide" && o.date && o.date > s.date!);
+  const text = s.text.toLowerCase();
+  const newer = all.filter(
+    (o) => o.kind !== "company-wide" && o.product && o.date && o.date > s.date! && text.includes(`nimbus ${o.product}`),
+  );
   if (newer.length === 0) return "";
-  return `\nNOTE: this company-wide summary (${s.date}) is OLDER than ${newer.map((o) => `[${o.label}] (${o.date})`).join(", ")}. Compare each of its statements with those newer sources and flag any difference as a disagreement.`;
+  return `\nNOTE: this company-wide summary (${s.date}) is OLDER than ${newer.map((o) => `[${o.label}] (${o.date})`).join(", ")} for the same product. Check whether it states a DIFFERENT VALUE (tier, price, version, time) for the same fact; if so, flag it as a disagreement. Definitions and extra detail are not disagreements.`;
 }
 
 export function formatSources(sources: SourcePassage[]): string {
